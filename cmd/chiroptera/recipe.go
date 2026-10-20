@@ -1,9 +1,11 @@
 package main
 
 import (
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/AlecAivazis/survey/v2"
@@ -94,14 +96,14 @@ var createCmd = &cobra.Command{
 				Name: "dependencies",
 				Prompt: &survey.Input{
 					Renderer: survey.Renderer{},
-					Message:  "[dependencies] Chiro dependencies are necessaries in your package? \n List them like this: dep1 dep2 dep3.",
+					Message:  "[dependencies] Chiro dependencies are necessaries in your package? List them like this: dep1 dep2 dep3.",
 				},
 			},
 			{
 				Name: "dependencies-external",
 				Prompt: &survey.Input{
 					Renderer: survey.Renderer{},
-					Message:  "[dependencies] Are dependencies from other package managers necessary? \n List them like this: package-manager1:dep1 package-manager2:dep2 package-manager3|package-manager-4:dep3. Dependencies must be named using the correspondent package manager standards.",
+					Message:  "[dependencies] Are dependencies from other package managers necessary? List them like this: package-manager1:dep1 package-manager2:dep2 package-manager3|package-manager-4:dep3. Dependencies must be named using the correspondent package manager standards.",
 				},
 			},
 			{
@@ -188,12 +190,28 @@ var createCmd = &cobra.Command{
 			return
 		}
 
-		r.Security.Signature = data
+		r.Security.Signature = hex.EncodeToString(data)
 		r.Security.SHA256 = hash
 
-		err = recipe.WriteRecipeFile(answers.Path, &r)
+		recipePath := filepath.Join(answers.Path, ".chiro", "package.toml")
+		err = recipe.WriteRecipeFile(recipePath, &r)
 		if err != nil {
 			fmt.Println("Error while writing recipe file: " + err.Error())
+			return
+		}
+
+		recipeData, err := os.ReadFile(recipePath)
+		if err != nil {
+			fmt.Println("Error while reading recipe file: " + err.Error())
+		}
+
+		recipeSignPath := filepath.Join(answers.Path, ".chiro", "package.signature")
+		recipeSign, err := crypto.SignData(privKey, recipeData)
+		if err != nil {
+			fmt.Println("Error while signing recipe file: " + err.Error())
+		}
+		if err := os.WriteFile(recipeSignPath, recipeSign, 0600); err != nil {
+			fmt.Println("Could not save the recipe file's signature because an error occurred:", err)
 			return
 		}
 

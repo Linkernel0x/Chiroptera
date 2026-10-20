@@ -107,3 +107,30 @@ func LoadConfiguration() (*Configuration, error) {
 
 	return &configuration, nil
 }
+
+func CheckConfiguration() bool {
+	_, err := LoadConfiguration()
+	if err != nil {
+		return false
+	}
+
+	_, _, err = GetKeys(GetBoth)
+	if err != nil {
+		return false
+	}
+
+	return true
+}
+
+func PurgeFolder() error {
+	directory, err := getConfigPath()
+	if err != nil {
+		return err
+	}
+
+	if err = os.RemoveAll(directory); err != nil {
+		return err
+	}
+
+	return nil
+}

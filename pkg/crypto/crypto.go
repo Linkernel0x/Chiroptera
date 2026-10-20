@@ -18,13 +18,13 @@ func GenerateKeyPair() ([]byte, []byte, error) {
 }
 
 // SignData signs data using the private key, returns the signature
-func SignData(privBytes []byte, data []byte) (string, error) {
+func SignData(privBytes []byte, data []byte) ([]byte, error) {
 	if len(privBytes) != ed25519.PrivateKeySize {
-		return "", fmt.Errorf("error signing data: invalid private key")
+		return nil, fmt.Errorf("error signing data: invalid private key")
 	}
 
 	signature := ed25519.Sign(privBytes, data)
-	return hex.EncodeToString(signature), nil
+	return signature, nil
 }
 
 // EvaluateHash calculates the hash of the provided data and returns it
