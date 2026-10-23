@@ -13,7 +13,7 @@ type Preferences struct {
 }
 
 type Configuration struct {
-	SchemaVersion string `json:"schema_version"`
+	SchemaVersion int    `json:"schema_version"`
 	Developer     string `json:"developer_name"`
 
 	GitHubToken string      `json:"github_token,omitempty"`
@@ -37,7 +37,7 @@ func SaveConfiguration(configuration *Configuration) error {
 	}
 
 	configDir := filepath.Dir(configPath)
-	if err := os.MkdirAll(configDir, 0700); err != nil {
+	if err = os.MkdirAll(configDir, 0700); err != nil {
 		return err
 	}
 
@@ -47,6 +47,22 @@ func SaveConfiguration(configuration *Configuration) error {
 	}
 
 	return os.WriteFile(configPath, data, 0600)
+}
+
+func SaveKeys(pub []byte, priv []byte) (error, error) {
+	directory, err := getConfigPath()
+	keysDirectory := filepath.Join(directory, "keys")
+	privKeyFile := filepath.Join(directory, "keys", "key")
+	pubKeyFile := filepath.Join(directory, "keys", "key.pub")
+	if err != nil {
+		return err, nil
+	}
+
+	if err = os.MkdirAll(keysDirectory, 0700); err != nil {
+		return err, nil
+	}
+
+	return os.WriteFile(privKeyFile, priv, 0600), os.WriteFile(pubKeyFile, pub, 0600)
 }
 
 type GetKeyMode int
