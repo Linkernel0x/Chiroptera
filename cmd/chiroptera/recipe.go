@@ -25,7 +25,6 @@ func init() {
 var recipeCmd = &cobra.Command{
 	Use:   "recipe",
 	Short: "Interact with package recipes",
-	Args:  cobra.ExactArgs(1),
 }
 
 var createCmd = &cobra.Command{
@@ -116,17 +115,17 @@ var createCmd = &cobra.Command{
 		}
 
 		answers := struct {
-			Path                 string
-			Name                 string
-			Version              string
-			Description          string
-			Url                  string
-			File                 string
-			Torrent              string
-			Dependencies         string
-			DependenciesExternal string
+			Path                 string `survey:"path"`
+			Name                 string `survey:"name"`
+			Version              string `survey:"version"`
+			Description          string `survey:"description"`
+			Url                  string `survey:"url"`
+			File                 string `survey:"file"`
+			Torrent              string `survey:"torrent"`
+			Dependencies         string `survey:"dependencies"`
+			DependenciesExternal string `survey:"dependencies-external"`
 
-			Confirm bool
+			Confirm bool `survey:"confirm"`
 		}{}
 		err := survey.Ask(questions, &answers)
 
@@ -148,25 +147,21 @@ var createCmd = &cobra.Command{
 		}
 
 		if answers.Dependencies != "" {
-			elements := strings.SplitSeq(answers.DependenciesExternal, " ")
-			for element := range elements {
-				element = strings.TrimSpace(element)
-				r.Dependencies.Chiro = append(r.Dependencies.Chiro, element)
+			for element := range strings.FieldsSeq(answers.Dependencies) {
+				r.Dependencies.Chiro = append(r.Dependencies.Chiro, strings.TrimSpace(element))
 			}
 		}
 		if answers.DependenciesExternal != "" {
-			elements := strings.SplitSeq(answers.DependenciesExternal, " ")
-			for element := range elements {
-				element = strings.TrimSpace(element)
-				r.Dependencies.System = append(r.Dependencies.System, element)
+			for element := range strings.FieldsSeq(answers.DependenciesExternal) {
+				r.Dependencies.System = append(r.Dependencies.System, strings.TrimSpace(element))
 			}
 		}
 
-		if _, err := os.Stat(answers.Path); errors.Is(err, os.ErrNotExist) {
+		if _, err := os.Stat(answers.File); errors.Is(err, os.ErrNotExist) {
 			fmt.Println("Error while recovering the package: ", err)
 			return
 		}
-		packData, err := os.ReadFile(answers.Path)
+		packData, err := os.ReadFile(answers.File)
 		if err != nil {
 			fmt.Println("Error while recovering the package: ", err)
 			return
@@ -225,6 +220,6 @@ var validateCmd = &cobra.Command{
 	Use:   "validate [dev@package#version]",
 	Short: "Validate a package file",
 	Run: func(cmd *cobra.Command, args []string) {
-
+		// TODO
 	},
 }
